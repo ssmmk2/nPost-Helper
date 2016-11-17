@@ -1,0 +1,515 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>NPOST CLASS &#8212; npost 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="index" title="색인" href="genindex.html" />
+    <link rel="search" title="검색" href="search.html" />
+    <link rel="top" title="npost 1.0.0 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to npost’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="npost-class">
+<h1>NPOST CLASS<a class="headerlink" href="#npost-class" title="제목 주소">¶</a></h1>
+<dl class="class">
+<dt id="nPost.NPOST">
+<em class="property">class </em><code class="descclassname">nPost.</code><code class="descname">NPOST</code><span class="sig-paren">(</span><em>login_id</em>, <em>login_pw</em>, <em>uid=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST" title="정의 주소">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>네이버 포스트로 포스팅 송출할 수 있도록 도와주는 클래스</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><ul class="first last simple">
+<li><strong>login_id</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 네이버 사용자 아이디</li>
+<li><strong>login_pw</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 네이버 사용자 패스워드</li>
+<li><strong>uid</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 네이버 포스트 등록 중 사용되는 고유 아이디</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="nPost.NPOST.encode_multipart_formdata">
+<code class="descname">encode_multipart_formdata</code><span class="sig-paren">(</span><em>fields</em>, <em>files</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.encode_multipart_formdata"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.encode_multipart_formdata" title="정의 주소">¶</a></dt>
+<dd><p>이미지 업로드시 사용할 파일의 multipart data 생성</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><ul class="first simple">
+<li><strong>fields</strong> &#8211; 전송할 파일정보</li>
+<li><strong>files</strong> &#8211; not use</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body"><p class="first last">content-type, multipart data</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.gen_byline_block">
+<code class="descname">gen_byline_block</code><span class="sig-paren">(</span><em>name</em>, <em>email</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.gen_byline_block"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.gen_byline_block" title="정의 주소">¶</a></dt>
+<dd><p>바이라인 block 생성</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 작성자명</li>
+<li><strong>email</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 작성자 이메일</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body"><p class="first last">바이라인 Block Dictionary</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.gen_image_block">
+<code class="descname">gen_image_block</code><span class="sig-paren">(</span><em>image</em>, <em>represent</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.gen_image_block"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.gen_image_block" title="정의 주소">¶</a></dt>
+<dd><p>image block 생성</p>
+<dl class="docutils">
+<dt><strong>represent</strong>:</dt>
+<dd><ul class="first last simple">
+<li>False : 일반 이미지</li>
+<li>True : 대표 이미지</li>
+</ul>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><ul class="first simple">
+<li><strong>image</strong> &#8211; image URL 또는 file</li>
+<li><strong>represent</strong> &#8211; 대표이미지 여부,</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body"><p class="first last">이미지 Block Dictionary</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.gen_info_block">
+<code class="descname">gen_info_block</code><span class="sig-paren">(</span><em>title</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.gen_info_block"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.gen_info_block" title="정의 주소">¶</a></dt>
+<dd><p>포스트 기본 정보 block 생성</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>title</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 제목</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">info block dictionary</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.gen_meta_data_block">
+<code class="descname">gen_meta_data_block</code><span class="sig-paren">(</span><em>tags=''</em>, <em>document_id=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.gen_meta_data_block"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.gen_meta_data_block" title="정의 주소">¶</a></dt>
+<dd><p>포스트 기본 metadata block 생성</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><ul class="first simple">
+<li><strong>tags</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 포스트에 들어가는 해쉬태그(필수 아님)</li>
+<li><strong>document_id</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 문서 업데이트 시 사용되는 문서ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body"><p class="first last">metaData Block Dictionary</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.gen_paragraph_block">
+<code class="descname">gen_paragraph_block</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.gen_paragraph_block"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.gen_paragraph_block" title="정의 주소">¶</a></dt>
+<dd><p>본문 text block 생성</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>text</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 내용</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">Paragraph Block Dictionary</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.gen_preview_block">
+<code class="descname">gen_preview_block</code><span class="sig-paren">(</span><em>content</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.gen_preview_block"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.gen_preview_block" title="정의 주소">¶</a></dt>
+<dd><p>미리보기 block 생성</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>content</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 요약본문</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">preview block dictionary</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.gen_related_article_block">
+<code class="descname">gen_related_article_block</code><span class="sig-paren">(</span><em>tags</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.gen_related_article_block"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.gen_related_article_block" title="정의 주소">¶</a></dt>
+<dd><p>관련기사 block 생성</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>tags</strong> (<em>dictionary</em>) &#8211; facebook og tags</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">관련기사 Block Dictionary</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.gen_section_title_block">
+<code class="descname">gen_section_title_block</code><span class="sig-paren">(</span><em>subtitle</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.gen_section_title_block"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.gen_section_title_block" title="정의 주소">¶</a></dt>
+<dd><p>중간 제목 block 생성</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>subtitle</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 중간제목</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">중간제목 block Dictionary</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.gen_title_header_block">
+<code class="descname">gen_title_header_block</code><span class="sig-paren">(</span><em>title</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.gen_title_header_block"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.gen_title_header_block" title="정의 주소">¶</a></dt>
+<dd><p>제목 영역 block 생성</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>title</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 제목</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">Title Header Dictionary</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.gen_video_block">
+<code class="descname">gen_video_block</code><span class="sig-paren">(</span><em>info</em>, <em>mtype</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.gen_video_block"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.gen_video_block" title="정의 주소">¶</a></dt>
+<dd><p>video block 생성</p>
+<dl class="docutils">
+<dt><strong>mtype</strong>:</dt>
+<dd><ul class="first last simple">
+<li>tvCast : 네이버 TV캐스트 영상</li>
+<li>youtube : Youtube 영상</li>
+</ul>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><ul class="first simple">
+<li><strong>info</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 영상관련 정보</li>
+<li><strong>mtype</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 영상 종류</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body"><p class="first last">영상 Block Dictionary</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.get_content_type">
+<code class="descname">get_content_type</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.get_content_type"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.get_content_type" title="정의 주소">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.get_related_article_meta_tag">
+<code class="descname">get_related_article_meta_tag</code><span class="sig-paren">(</span><em>url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.get_related_article_meta_tag"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.get_related_article_meta_tag" title="정의 주소">¶</a></dt>
+<dd><p>URL의 문서로 부터 사용된 facebook open graph meta tags 정보를 가져온다.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>url</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 관련기사 URL</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">facebook open graph meta tags</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.get_request_url">
+<code class="descname">get_request_url</code><span class="sig-paren">(</span><em>request_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.get_request_url"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.get_request_url" title="정의 주소">¶</a></dt>
+<dd><p>해당 유형에 맞는 URL을 반환한다.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>request_type</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 액션 TYPE</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">URL</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.get_sessionkey">
+<code class="descname">get_sessionkey</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.get_sessionkey"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.get_sessionkey" title="정의 주소">¶</a></dt>
+<dd><p>현재 로그인한 사용자의 포스트 서비스 sessionKey 획득.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">반환:</th><td class="field-body">sessionKey</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.get_tvcast_link_info">
+<code class="descname">get_tvcast_link_info</code><span class="sig-paren">(</span><em>video_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.get_tvcast_link_info"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.get_tvcast_link_info" title="정의 주소">¶</a></dt>
+<dd><p>입력된 TV 캐스트 영상 URL에서 해당영상의 정보를 가져온다.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>video_url</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; TV 캐스트 영상 URL</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">TV 캐스트 영상 정보 json object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.get_youtube_video_info">
+<code class="descname">get_youtube_video_info</code><span class="sig-paren">(</span><em>url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.get_youtube_video_info"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.get_youtube_video_info" title="정의 주소">¶</a></dt>
+<dd><p>youtube 영상 아이디와 대표 썸네일 이미지 URL을 반환한다.</p>
+<dl class="docutils">
+<dt><strong>Support URL Patterns</strong>:</dt>
+<dd><ul class="first last simple">
+<li><a class="reference external" href="http://youtu.be/SA2iWivDJiE">http://youtu.be/SA2iWivDJiE</a></li>
+<li><a class="reference external" href="http://www.youtube.com/watch?v=_oPAwA_Udwc&amp;feature=feedu">http://www.youtube.com/watch?v=_oPAwA_Udwc&amp;feature=feedu</a></li>
+<li><a class="reference external" href="http://www.youtube.com/embed/SA2iWivDJiE">http://www.youtube.com/embed/SA2iWivDJiE</a></li>
+<li><a class="reference external" href="http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;amp;hl=en_US">http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;amp;hl=en_US</a></li>
+</ul>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>url</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; youtube 영상 URL</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">영상 아이디 썸네일 이미지 URL</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.login">
+<code class="descname">login</code><span class="sig-paren">(</span><em>login_id</em>, <em>login_pw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.login"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.login" title="정의 주소">¶</a></dt>
+<dd><p>네이버 로그인 처리 후 Cookies 획득</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><ul class="first simple">
+<li><strong>login_id</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 네이버 사용자 아이디</li>
+<li><strong>login_pw</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 네이버 사용자 패스워드</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body"><p class="first last">none</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.post_multipart_file">
+<code class="descname">post_multipart_file</code><span class="sig-paren">(</span><em>url</em>, <em>file</em>, <em>filename</em>, <em>content_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.post_multipart_file"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.post_multipart_file" title="정의 주소">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.send_image_file">
+<code class="descname">send_image_file</code><span class="sig-paren">(</span><em>file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.send_image_file"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.send_image_file" title="정의 주소">¶</a></dt>
+<dd><p>네이버로 이미지 파일 업로드
+(현재는 이미지 URL만 테스트 완료됨)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><strong>file</strong> &#8211; 이미지 파일 또는 이미지 URL</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body">업로드 처리결과 response</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nPost.NPOST.send_post">
+<code class="descname">send_post</code><span class="sig-paren">(</span><em>pre_content</em>, <em>content</em>, <em>mode</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nPost.html#NPOST.send_post"><span class="viewcode-link">[소스]</span></a><a class="headerlink" href="#nPost.NPOST.send_post" title="정의 주소">¶</a></dt>
+<dd><p>네이버로 포스팅할 데이터를 전송.
+포스트 요약본 데이터를 먼저 전송 후 포스트 전체 데이터를 전송.</p>
+<dl class="docutils">
+<dt><strong>mode</strong>:</dt>
+<dd><ul class="first last simple">
+<li>writePost : 등록</li>
+<li>updatePost : 갱신</li>
+</ul>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">매개 변수:</th><td class="field-body"><ul class="first simple">
+<li><strong>pre_content</strong> (<a class="reference external" href="https://docs.python.org/2/library/json.html#module-json" title="(in Python v2.7)"><em>json</em></a>) &#8211; 포스트 요약본 object</li>
+<li><strong>content</strong> (<a class="reference external" href="https://docs.python.org/2/library/json.html#module-json" title="(in Python v2.7)"><em>json</em></a>) &#8211; 포스트 object</li>
+<li><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; 등록 구분</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">반환:</th><td class="field-body"><p class="first last">등록 처리결과 response</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="json">
+<h2>JSON 구성 방법<a class="headerlink" href="#json" title="제목 주소">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">목차</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">NPOST CLASS</a><ul>
+<li><a class="reference internal" href="#json">JSON 구성 방법</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="이전 장">Welcome to npost&#8217;s documentation!</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>현재 문서</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/npost.txt"
+            rel="nofollow">소스 코드를 보려면</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>빠른 검색</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="바로 가기" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, elk.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/npost.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

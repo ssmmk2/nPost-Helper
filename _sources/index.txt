@@ -1,0 +1,30 @@
+.. npost documentation master file, created by
+   sphinx-quickstart on Thu Nov 17 11:21:55 2016.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to npost's documentation!
+=================================
+
+.. warning::
+   이 클래스는 네이버 포스트를 등록하기 위한 공식적인 방법이 아닙니다.
+   개인 용도로 사용하기 위해 만든 것이므로 사용중 발생하는 문제는 사용자의 책임 입니다.
+
+
+Contents:
+
+.. toctree::
+   :maxdepth: 3
+
+   npost
+
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+

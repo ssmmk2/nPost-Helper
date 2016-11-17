@@ -1,0 +1,12 @@
+NPOST CLASS
+=============
+
+.. autoclass:: nPost.NPOST
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+JSON 구성 방법
+--------------
+
+

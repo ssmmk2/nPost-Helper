@@ -1,0 +1,795 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>npost.nPost &#8212; npost 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <link rel="index" title="색인" href="../../genindex.html" />
+    <link rel="search" title="검색" href="../../search.html" />
+    <link rel="top" title="npost 1.0.0 documentation" href="../../index.html" />
+    <link rel="up" title="모듈 코드" href="../index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for npost.nPost</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">import</span> <span class="nn">mimetypes</span>
+<span class="kn">import</span> <span class="nn">xmltodict</span>
+<span class="kn">import</span> <span class="nn">pytz</span>
+<span class="kn">from</span> <span class="nn">urllib</span> <span class="k">import</span> <span class="n">parse</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+
+
+<div class="viewcode-block" id="NPOST"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST">[문서]</a><span class="k">class</span> <span class="nc">NPOST</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    네이버 포스트로 포스팅 송출할 수 있도록 도와주는 클래스</span>
+
+<span class="sd">    :param string login_id: 네이버 사용자 아이디</span>
+<span class="sd">    :param string login_pw: 네이버 사용자 패스워드</span>
+<span class="sd">    :param string uid: 네이버 포스트 등록 중 사용되는 고유 아이디</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">login_id</span><span class="p">,</span> <span class="n">login_pw</span><span class="p">,</span> <span class="n">uid</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">uid</span>  <span class="c1"># 단체 아이디 사용시 필요</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">uid</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">login_id</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">login_id</span><span class="p">,</span> <span class="n">login_pw</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NPOST.login"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.login">[문서]</a>    <span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">login_id</span><span class="p">,</span> <span class="n">login_pw</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        네이버 로그인 처리 후 Cookies 획득</span>
+
+<span class="sd">        :param string login_id: 네이버 사용자 아이디</span>
+<span class="sd">        :param string login_pw: 네이버 사용자 패스워드</span>
+<span class="sd">        :return: none</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_url</span><span class="p">(</span><span class="s1">&#39;login&#39;</span><span class="p">)</span>
+
+        <span class="c1"># 네이버 로그인을 위한 매개변수</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">login_id</span><span class="p">,</span> <span class="s1">&#39;pw&#39;</span><span class="p">:</span> <span class="n">login_pw</span><span class="p">,</span> <span class="s1">&#39;saveID&#39;</span><span class="p">:</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;enctp&#39;</span><span class="p">:</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;smart_level&#39;</span><span class="p">:</span> <span class="s1">&#39;-1&#39;</span><span class="p">,</span> <span class="s1">&#39;svctype&#39;</span><span class="p">:</span> <span class="s1">&#39;0&#39;</span><span class="p">}</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">bin_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+        <span class="n">request</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">bin_data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+
+        <span class="c1"># header 설정</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;application/x-www-form-urlencoded&#39;</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Referer&#39;</span><span class="p">,</span> <span class="s1">&#39;https://nid.naver.com/nidlogin.login?&#39;</span>
+                                      <span class="s1">&#39;svctype=262144&amp;url=http://m.naver.com/aside/&#39;</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span> <span class="s1">&#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) &#39;</span>
+                                         <span class="s1">&#39;AppleWebKit/537.36 (KHTML, like Gecko) &#39;</span>
+                                         <span class="s1">&#39;Chrome/51.0.2704.103 Safari/537.36&#39;</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">response_content</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_url</span><span class="p">(</span><span class="s1">&#39;loginSuccess&#39;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">response_content</span><span class="p">:</span>
+                <span class="c1"># 쿠키 획득</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">getheader</span><span class="p">(</span><span class="s1">&#39;Set-cookie&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;ok&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;error&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;error&#39;</span></div>
+
+<div class="viewcode-block" id="NPOST.send_post"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.send_post">[문서]</a>    <span class="k">def</span> <span class="nf">send_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pre_content</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        네이버로 포스팅할 데이터를 전송.</span>
+<span class="sd">        포스트 요약본 데이터를 먼저 전송 후 포스트 전체 데이터를 전송.</span>
+
+<span class="sd">        **mode**:</span>
+<span class="sd">            - writePost : 등록</span>
+<span class="sd">            - updatePost : 갱신</span>
+
+<span class="sd">        :param json pre_content: 포스트 요약본 object</span>
+<span class="sd">        :param json content: 포스트 object</span>
+<span class="sd">        :param string mode: 등록 구분</span>
+<span class="sd">        :return: 등록 처리결과 response</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">pre_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_url</span><span class="p">(</span><span class="s1">&#39;prePost&#39;</span><span class="p">)</span>
+        <span class="n">post_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_url</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+
+        <span class="n">pre_data</span> <span class="o">=</span> <span class="n">pre_content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;euc-kr&#39;</span><span class="p">)</span>
+
+        <span class="n">request</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">pre_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">pre_data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+
+        <span class="c1"># header 설정</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Referer&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_url</span><span class="p">(</span><span class="s1">&#39;send&#39;</span><span class="p">))</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span> <span class="s1">&#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) &#39;</span>
+                                         <span class="s1">&#39;AppleWebKit/537.36 (KHTML, like Gecko) &#39;</span>
+                                         <span class="s1">&#39;Chrome/51.0.2704.103 Safari/537.36&#39;</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;application/json; charset=UTF-8&#39;</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Cookie&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="p">)</span>
+
+        <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+        <span class="c1"># 포스트 본문 전송</span>
+
+        <span class="n">post_data</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;euc-kr&#39;</span><span class="p">)</span>
+
+        <span class="n">request</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">post_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">post_data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+
+        <span class="c1"># header 설정</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Referer&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_url</span><span class="p">(</span><span class="s1">&#39;canvas&#39;</span><span class="p">))</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span> <span class="s1">&#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) &#39;</span>
+                                         <span class="s1">&#39;AppleWebKit/537.36 (KHTML, like Gecko) &#39;</span>
+                                         <span class="s1">&#39;Chrome/51.0.2704.103 Safari/537.36&#39;</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;application/json; charset=UTF-8&#39;</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Cookie&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+        <span class="n">response_content</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">response_content</span></div>
+
+<div class="viewcode-block" id="NPOST.get_sessionkey"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.get_sessionkey">[문서]</a>    <span class="k">def</span> <span class="nf">get_sessionkey</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        현재 로그인한 사용자의 포스트 서비스 sessionKey 획득.</span>
+
+<span class="sd">        :return: sessionKey</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_url</span><span class="p">(</span><span class="s1">&#39;sessionKey&#39;</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">uploaderType</span><span class="o">=</span><span class="s1">&#39;simple&#39;</span><span class="p">,</span> <span class="n">userId</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="n">serviceId</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">bin_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+        <span class="n">request</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">bin_data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+
+        <span class="c1"># header 설정</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Referer&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_url</span><span class="p">(</span><span class="s1">&#39;canvas&#39;</span><span class="p">))</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span> <span class="s1">&#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) &#39;</span>
+                                         <span class="s1">&#39;AppleWebKit/537.36 (KHTML, like Gecko) &#39;</span>
+                                         <span class="s1">&#39;Chrome/51.0.2704.103 Safari/537.36&#39;</span><span class="p">)</span>
+
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Cookie&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">response_content</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+        <span class="n">session_key</span> <span class="o">=</span> <span class="n">response_content</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="s1">&#39;sessionKey&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">session_key</span></div>
+
+<div class="viewcode-block" id="NPOST.get_tvcast_link_info"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.get_tvcast_link_info">[문서]</a>    <span class="k">def</span> <span class="nf">get_tvcast_link_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        입력된 TV 캐스트 영상 URL에서 해당영상의 정보를 가져온다.</span>
+
+<span class="sd">        :param string video_url: TV 캐스트 영상 URL</span>
+<span class="sd">        :return: TV 캐스트 영상 정보 json object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_url</span><span class="p">(</span><span class="s1">&#39;tvCast&#39;</span><span class="p">)</span>
+        <span class="n">referer</span> <span class="o">=</span> <span class="s1">&#39;http://uploader1.nmv.naver.com/upload/linkNew.nhn?sid=26&amp;userId=&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">uid</span> <span class="o">+</span> <span class="s1">&#39;&amp;tab=link&#39;</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">video_url</span><span class="p">,</span> <span class="n">serviceId</span><span class="o">=</span><span class="mi">26</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;new&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">bin_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+        <span class="n">request</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">bin_data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Referer&#39;</span><span class="p">,</span> <span class="n">referer</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span> <span class="s1">&#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) &#39;</span>
+                                         <span class="s1">&#39;AppleWebKit/537.36 (KHTML, like Gecko) &#39;</span>
+                                         <span class="s1">&#39;Chrome/51.0.2704.103 Safari/537.36&#39;</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;cookie&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">link_info</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">link_info</span></div>
+
+<div class="viewcode-block" id="NPOST.get_related_article_meta_tag"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.get_related_article_meta_tag">[문서]</a>    <span class="k">def</span> <span class="nf">get_related_article_meta_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        URL의 문서로 부터 사용된 facebook open graph meta tags 정보를 가져온다.</span>
+
+<span class="sd">        :param string url: 관련기사 URL</span>
+<span class="sd">        :return: facebook open graph meta tags</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;euc-kr&#39;</span><span class="p">,</span> <span class="s1">&#39;replace&#39;</span><span class="p">)</span>
+
+        <span class="n">tags</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;&lt;\s*meta\s+property=&quot;(og:[^&quot;]+)&quot;\s+content=&quot;([^&quot;]*)&#39;</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+
+        <span class="n">ogtags</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tags</span><span class="p">)):</span>
+            <span class="n">ogtags</span><span class="p">[</span><span class="n">tags</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">ogtags</span></div>
+
+<div class="viewcode-block" id="NPOST.get_request_url"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.get_request_url">[문서]</a>    <span class="k">def</span> <span class="nf">get_request_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        해당 유형에 맞는 URL을 반환한다.</span>
+
+<span class="sd">        :param string request_type: 액션 TYPE</span>
+<span class="sd">        :return: URL</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;login&#39;</span><span class="p">:</span> <span class="s1">&#39;https://nid.naver.com/nidlogin.login&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;loginSuccess&#39;</span><span class="p">:</span> <span class="s1">&#39;https://nid.naver.com/login/sso/finalize.nhn&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;tvCast&#39;</span><span class="p">:</span> <span class="s1">&#39;http://uploader1.nmv.naver.com/upload/getLinkInfo.nhn&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;sessionKey&#39;</span><span class="p">:</span> <span class="s1">&#39;http://post.editor.naver.com/PhotoUploader/SessionKey.json&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;prePost&#39;</span><span class="p">:</span> <span class="s1">&#39;http://post.editor.naver.com/Service/PwmFilter.json&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;writePost&#39;</span><span class="p">:</span> <span class="s1">&#39;http://post.editor.naver.com/documents/write.json&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;updatePost&#39;</span><span class="p">:</span> <span class="s1">&#39;http://post.editor.naver.com/documents/update.json&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;canvas&#39;</span><span class="p">:</span> <span class="s1">&#39;http://post.editor.naver.com/editor/canvas?serviceId=post&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;send&#39;</span><span class="p">:</span> <span class="s1">&#39;http://post.editor.naver.com/editor&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">url_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">request_type</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NPOST.send_image_file"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.send_image_file">[문서]</a>    <span class="k">def</span> <span class="nf">send_image_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        네이버로 이미지 파일 업로드</span>
+<span class="sd">        (현재는 이미지 URL만 테스트 완료됨)</span>
+
+<span class="sd">        :param file: 이미지 파일 또는 이미지 URL</span>
+<span class="sd">        :return: 업로드 처리결과 response</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">session_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sessionkey</span><span class="p">()</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;http://ecommerce.upphoto.naver.com/&#39;</span> <span class="o">+</span> <span class="n">session_key</span> <span class="o">+</span> <span class="s1">&#39;/simpleUpload/0&#39;</span>
+
+        <span class="c1"># file 이 url 인지 binary 인지 확인</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">path</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">file</span>
+            <span class="n">tmp_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">tmp_file</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">content_type</span> <span class="o">=</span> <span class="s1">&#39;image/&#39;</span> <span class="o">+</span> <span class="n">ext</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_multipart_file</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="n">content_type</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">xmltodict</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="NPOST.post_multipart_file"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.post_multipart_file">[문서]</a>    <span class="k">def</span> <span class="nf">post_multipart_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">content_type</span><span class="p">):</span>
+
+        <span class="n">referer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_url</span><span class="p">(</span><span class="s1">&#39;canvas&#39;</span><span class="p">)</span>
+
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;userId&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span>
+            <span class="s1">&#39;extractExif&#39;</span><span class="p">:</span> <span class="s1">&#39;False&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;extractAnimatedCnt&#39;</span><span class="p">:</span> <span class="s1">&#39;True&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;autorotate&#39;</span><span class="p">:</span> <span class="s1">&#39;True&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;extractDominantColor&#39;</span><span class="p">:</span> <span class="s1">&#39;False&#39;</span>
+        <span class="p">}</span>
+
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="n">cont_type</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode_multipart_formdata</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">files</span><span class="p">)</span>
+
+        <span class="n">request</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">body</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;POST&#39;</span><span class="p">)</span>
+
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Referer&#39;</span><span class="p">,</span> <span class="n">referer</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span> <span class="s1">&#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) &#39;</span>
+                                         <span class="s1">&#39;AppleWebKit/537.36 (KHTML, like Gecko) &#39;</span>
+                                         <span class="s1">&#39;Chrome/51.0.2704.103 Safari/537.36&#39;</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="n">cont_type</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;content-length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)))</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;cookie&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NPOST.encode_multipart_formdata"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.encode_multipart_formdata">[문서]</a>    <span class="k">def</span> <span class="nf">encode_multipart_formdata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">files</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        이미지 업로드시 사용할 파일의 multipart data 생성</span>
+
+<span class="sd">        :param fields: 전송할 파일정보</span>
+<span class="sd">        :param files: not use</span>
+<span class="sd">        :return: multipart data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">boundary_str</span> <span class="o">=</span> <span class="s1">&#39;------WebKitFormBoundarytZtQBX0ACVJGXe1W&#39;</span>
+        <span class="n">crlf</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;ASCII&quot;</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;--&quot;</span> <span class="o">+</span> <span class="n">boundary_str</span><span class="p">,</span> <span class="s2">&quot;ASCII&quot;</span><span class="p">))</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="s1">&#39;Content-Disposition: form-data; name=&quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="n">key</span><span class="p">,</span> <span class="s2">&quot;ASCII&quot;</span><span class="p">))</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;ASCII&quot;</span><span class="p">))</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="s1">&#39;--&#39;</span> <span class="o">+</span> <span class="n">boundary_str</span><span class="p">,</span> <span class="s2">&quot;ASCII&quot;</span><span class="p">))</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="s1">&#39;Content-Disposition: form-data; name=&quot;</span><span class="si">%s</span><span class="s1">&quot;; filename=&quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="s2">&quot;ASCII&quot;</span><span class="p">))</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="s1">&#39;Content-Type: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_content_type</span><span class="p">(</span><span class="n">filename</span><span class="p">),</span> <span class="s2">&quot;ASCII&quot;</span><span class="p">))</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="s1">&#39;--&#39;</span> <span class="o">+</span> <span class="n">boundary_str</span> <span class="o">+</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="s2">&quot;ASCII&quot;</span><span class="p">))</span>
+        <span class="n">line</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="n">body</span> <span class="o">=</span> <span class="n">crlf</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">content_type</span> <span class="o">=</span> <span class="s1">&#39;multipart/form-data; boundary=&#39;</span> <span class="o">+</span> <span class="n">boundary_str</span>
+
+        <span class="k">return</span> <span class="n">content_type</span><span class="p">,</span> <span class="n">body</span></div>
+
+<div class="viewcode-block" id="NPOST.get_content_type"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.get_content_type">[문서]</a>    <span class="k">def</span> <span class="nf">get_content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="s1">&#39;application/octet-stream&#39;</span></div>
+
+<div class="viewcode-block" id="NPOST.get_youtube_video_info"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.get_youtube_video_info">[문서]</a>    <span class="k">def</span> <span class="nf">get_youtube_video_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        youtube 영상 아이디와 대표 썸네일 이미지 URL을 반환한다.</span>
+
+<span class="sd">        **Support URL Patterns**:</span>
+<span class="sd">            - http://youtu.be/SA2iWivDJiE</span>
+<span class="sd">            - http://www.youtube.com/watch?v=_oPAwA_Udwc&amp;feature=feedu</span>
+<span class="sd">            - http://www.youtube.com/embed/SA2iWivDJiE</span>
+<span class="sd">            - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;amp;hl=en_US</span>
+
+<span class="sd">        :param string url: youtube 영상 URL</span>
+<span class="sd">        :return: 영상 아이디 썸네일 이미지 URL</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mid</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">hostname</span> <span class="o">==</span> <span class="s1">&#39;youtu.be&#39;</span><span class="p">:</span>
+            <span class="n">mid</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">hostname</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;www.youtube.com&#39;</span><span class="p">,</span> <span class="s1">&#39;youtube.com&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s1">&#39;/watch&#39;</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">parse</span><span class="o">.</span><span class="n">parse_qs</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
+                <span class="n">mid</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">path</span><span class="p">[:</span><span class="mi">7</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;/embed/&#39;</span><span class="p">:</span>
+                <span class="n">mid</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">path</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;/v/&#39;</span><span class="p">:</span>
+                <span class="n">mid</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="c1"># thumbnail path</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;http://img.youtube.com/vi/&#39;</span> <span class="o">+</span> <span class="n">mid</span> <span class="o">+</span> <span class="s1">&#39;/maxresdefault.jpg&#39;</span>
+
+        <span class="k">return</span> <span class="n">mid</span><span class="p">,</span> <span class="n">path</span></div>
+
+<div class="viewcode-block" id="NPOST.gen_preview_block"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.gen_preview_block">[문서]</a>    <span class="k">def</span> <span class="nf">gen_preview_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        미리보기 block 생성</span>
+
+<span class="sd">        :param string content: 요약본문</span>
+<span class="sd">        :return: preview block dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;‘&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;’&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+
+        <span class="n">prev_obj</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">prev_obj</span><span class="p">[</span><span class="s1">&#39;serviceId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;post&#39;</span>
+        <span class="n">prev_obj</span><span class="p">[</span><span class="s1">&#39;ugcType&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;UGC100&#39;</span><span class="p">,</span> <span class="s1">&#39;UGC101&#39;</span><span class="p">,</span> <span class="s1">&#39;UGC102&#39;</span><span class="p">,</span> <span class="s1">&#39;UGC103&#39;</span><span class="p">,</span> <span class="s1">&#39;UGC013&#39;</span><span class="p">]</span>
+        <span class="n">prev_obj</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">content</span>
+
+        <span class="k">return</span> <span class="n">prev_obj</span></div>
+
+<div class="viewcode-block" id="NPOST.gen_info_block"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.gen_info_block">[문서]</a>    <span class="k">def</span> <span class="nf">gen_info_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        포스트 기본 정보 block 생성</span>
+
+<span class="sd">        :param string title: 제목</span>
+<span class="sd">        :return: info block dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># 현재시간</span>
+        <span class="n">date_format</span> <span class="o">=</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S%z&quot;</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">pytz</span><span class="o">.</span><span class="n">timezone</span><span class="p">(</span><span class="s1">&#39;Asia/Seoul&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">date_format</span><span class="p">)</span>
+
+        <span class="n">info_obj</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">info_obj</span><span class="p">[</span><span class="s1">&#39;serviceId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;post&#39;</span>
+        <span class="n">info_obj</span><span class="p">[</span><span class="s1">&#39;document&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">info_obj</span><span class="p">[</span><span class="s1">&#39;document&#39;</span><span class="p">][</span><span class="s1">&#39;docType&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;normal&#39;</span>
+        <span class="n">info_obj</span><span class="p">[</span><span class="s1">&#39;document&#39;</span><span class="p">][</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">title</span>
+        <span class="n">info_obj</span><span class="p">[</span><span class="s1">&#39;document&#39;</span><span class="p">][</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>  <span class="c1"># 용도를 알 수 없음</span>
+        <span class="n">info_obj</span><span class="p">[</span><span class="s1">&#39;document&#39;</span><span class="p">][</span><span class="s1">&#39;theme&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span>
+        <span class="n">info_obj</span><span class="p">[</span><span class="s1">&#39;document&#39;</span><span class="p">][</span><span class="s1">&#39;author&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>  <span class="c1"># 용도를 알 수 없음</span>
+        <span class="n">info_obj</span><span class="p">[</span><span class="s1">&#39;document&#39;</span><span class="p">][</span><span class="s1">&#39;publishDate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">now</span>  <span class="c1"># ISO8601 format ex) 2016-08-01T10:14:45+09:00</span>
+        <span class="n">info_obj</span><span class="p">[</span><span class="s1">&#39;document&#39;</span><span class="p">][</span><span class="s1">&#39;documentStyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;@ctype&#39;</span><span class="p">:</span> <span class="s1">&#39;documentStyle&#39;</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">info_obj</span></div>
+
+<div class="viewcode-block" id="NPOST.gen_title_header_block"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.gen_title_header_block">[문서]</a>    <span class="k">def</span> <span class="nf">gen_title_header_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        제목 영역 block 생성</span>
+
+<span class="sd">        :param string title: 제목</span>
+<span class="sd">        :return: Title Header Dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">header_obj</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">title</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;publishDate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1970-01-01T00:00:00.000+0000&#39;</span>  <span class="c1"># 등록에 영향을 주지 않음</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;background&#39;</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">][</span><span class="s1">&#39;color&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;documentTitle&#39;</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;layout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;isFocused&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;false&#39;</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;componentStyle&#39;</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;align&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;left&#39;</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontFamily&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;nanumgothic&#39;</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontSize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;D1&#39;</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontBold&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontUnderline&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontItalic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;compId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;documentTitle_9022535151470014076389&#39;</span>
+        <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;focusComp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="n">header_obj</span></div>
+
+<div class="viewcode-block" id="NPOST.gen_paragraph_block"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.gen_paragraph_block">[문서]</a>    <span class="k">def</span> <span class="nf">gen_paragraph_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        본문 text block 생성</span>
+
+<span class="sd">        :param string text: 내용</span>
+<span class="sd">        :return: Paragraph Block Dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="n">paragraph_obj</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;paragraph&#39;</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;layout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;isFocused&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;componentStyle&#39;</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;align&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;left&#39;</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontFamily&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;nanumgothic&#39;</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontSize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T3&#39;</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontBold&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontUnderline&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontItalic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;lineHeight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;compId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;paragraph_3801062811469603612800&#39;</span>
+        <span class="n">paragraph_obj</span><span class="p">[</span><span class="s1">&#39;focusComp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="n">paragraph_obj</span></div>
+
+<div class="viewcode-block" id="NPOST.gen_section_title_block"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.gen_section_title_block">[문서]</a>    <span class="k">def</span> <span class="nf">gen_section_title_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subtitle</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        중간 제목 block 생성</span>
+
+<span class="sd">        :param string subtitle: 중간제목</span>
+<span class="sd">        :return: 중간제목 block Dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># 특수문자 제거 (필요시 reg 추가하여 처리)</span>
+        <span class="c1">#subtitle = re.sub(r&#39;◆&#39;, &#39;&#39;, subtitle)</span>
+
+        <span class="n">subtitle_obj</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subtitle</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;quotation&#39;</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;layout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;isFocused&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;componentStyle&#39;</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontSize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T2&#39;</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontBold&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontUnderline&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontItalic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;compId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;quotation_2711786871470204596536&#39;</span>
+        <span class="n">subtitle_obj</span><span class="p">[</span><span class="s1">&#39;focusComp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="n">subtitle_obj</span></div>
+
+<div class="viewcode-block" id="NPOST.gen_image_block"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.gen_image_block">[문서]</a>    <span class="k">def</span> <span class="nf">gen_image_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">represent</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        image block 생성</span>
+
+<span class="sd">        **represent**:</span>
+<span class="sd">            - False : 일반 이미지</span>
+<span class="sd">            - True : 대표 이미지</span>
+
+<span class="sd">        :param image: image URL 또는 file</span>
+<span class="sd">        :param represent: 대표이미지 여부,</span>
+<span class="sd">        :return: 이미지 Block Dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">img_obj</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;http://post.phinf.naver.net&#39;</span> <span class="o">+</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;?type=w1200&#39;</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;originalWidth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;originalHeight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;alt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;fileName&#39;</span><span class="p">]</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="s1">&#39;naCaption&#39;</span> <span class="ow">in</span> <span class="n">image</span><span class="p">:</span>  <span class="c1"># 캡션이 있다면 추가</span>
+            <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;naCaption&#39;</span><span class="p">]</span>
+
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">]</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;domain&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;http://post.phinf.naver.net/&#39;</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;uploadedLocal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;offsetCenterXRatio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;offsetCenterYRatio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;backgroundPositionX&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;50%&#39;</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;backgroundPositionY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;50%&#39;</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;fileSize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;fileSize&#39;</span><span class="p">]</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;represent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">represent</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;fileName&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;fileName&#39;</span><span class="p">]</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;animationGif&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="s1">&#39;gallery_link&#39;</span> <span class="ow">in</span> <span class="n">image</span><span class="p">:</span>  <span class="c1"># 화보라면 링크 처리</span>
+            <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;link&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="s1">&#39;gallery_link&#39;</span><span class="p">]</span>
+
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;image&#39;</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;layout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;isFocused&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;componentStyle&#39;</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;align&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;justify&#39;</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontBold&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontUnderline&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontItalic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;compId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;image_5233948931470204596538&#39;</span>
+        <span class="n">img_obj</span><span class="p">[</span><span class="s1">&#39;focusComp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="n">img_obj</span></div>
+
+<div class="viewcode-block" id="NPOST.gen_video_block"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.gen_video_block">[문서]</a>    <span class="k">def</span> <span class="nf">gen_video_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">mtype</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        video block 생성</span>
+
+<span class="sd">        **mtype**:</span>
+<span class="sd">            - tvCast : 네이버 TV캐스트 영상</span>
+<span class="sd">            - youtube : Youtube 영상</span>
+
+<span class="sd">        :param string info: 영상관련 정보</span>
+<span class="sd">        :param string mtype: 영상 종류</span>
+<span class="sd">        :return: 영상 Block Dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">video</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">mtype</span> <span class="o">==</span> <span class="s1">&#39;tvCast&#39;</span><span class="p">:</span>  <span class="c1"># TVCast 영상일 경우</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;vid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;videoId&#39;</span><span class="p">]</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;simpleThumbnail&#39;</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">][</span><span class="s1">&#39;src&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">]</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">][</span><span class="s1">&#39;alt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;source&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;videoTemplateSource&#39;</span><span class="p">]</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;videoTemplate&#39;</span><span class="p">]</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;vender&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;TVcast&#39;</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># 유튜브 영상일 경우</span>
+            <span class="c1"># vid and thumbnail url parse</span>
+            <span class="n">vid</span><span class="p">,</span> <span class="n">thumb_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_youtube_video_info</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">])</span>
+
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;vid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vid</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;simpleThumbnail&#39;</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">][</span><span class="s1">&#39;src&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">thumb_url</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">][</span><span class="s1">&#39;alt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;source&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">]</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;html&#39;</span><span class="p">]</span>
+            <span class="n">video</span><span class="p">[</span><span class="s1">&#39;vender&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;youtube&#39;</span>
+
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;video&#39;</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;layout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;isFocused&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;uploadedLocal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;represent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;fileSize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;componentStyle&#39;</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontBold&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontUnderline&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontItalic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;compId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;video_7546429391470204596539&#39;</span>
+        <span class="n">video</span><span class="p">[</span><span class="s1">&#39;focusComp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="n">video</span></div>
+
+<div class="viewcode-block" id="NPOST.gen_byline_block"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.gen_byline_block">[문서]</a>    <span class="k">def</span> <span class="nf">gen_byline_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">email</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        바이라인 block 생성</span>
+
+<span class="sd">        :param string name: 작성자명</span>
+<span class="sd">        :param string email: 작성자 이메일</span>
+<span class="sd">        :return: 바이라인 Block Dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="s1">&#39;&lt;span style=&quot;color: rgb(0, 0, 0);&#39;</span> \
+                <span class="s1">&#39;&quot;&gt;&#39;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">&#39; 기자&lt;/span&gt;&lt;span class=&quot;Apple-converted-space&quot; &#39;</span> \
+                <span class="s1">&#39;style=&quot;color: rgb(0, 0, 0);&quot;&gt;&amp;nbsp;&lt;/span&gt;&#39;</span> \
+                <span class="s1">&#39;&lt;a href=&quot;mailto:&#39;</span> <span class="o">+</span> <span class="n">email</span> <span class="o">+</span> <span class="s1">&#39;&quot; style=&quot;color: rgb(96, 140, 186) &#39;</span> \
+                <span class="s1">&#39;!important&quot;&gt;&#39;</span> <span class="o">+</span> <span class="n">email</span> <span class="o">+</span> <span class="s1">&#39;&lt;/a&gt;&lt;span class=&quot;Apple-converted-space&quot; &#39;</span> \
+                <span class="s1">&#39;style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;/span&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&#39;</span> \
+                <span class="s1">&#39;&amp;lt;자동차 전문 매체 모터그래프(&lt;/span&gt;&lt;a href=&quot;http://motorgraph.com/&quot; target=&quot;_blank&quot; &#39;</span> \
+                <span class="s1">&#39;style=&quot;color: rgb(96, 140, 186) !important&quot;&gt;http://motorgraph.com&lt;/a&gt;&lt;span style=&quot;color:&#39;</span> \
+                <span class="s1">&#39; rgb(0, 0, 0);&quot;&gt;) &amp;gt;&lt;/span&gt;&lt;/br&gt;&#39;</span>
+
+        <span class="n">byline</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;paragraph&#39;</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;layout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;isFocused&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;componentStyle&#39;</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;align&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;left&#39;</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontFamily&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;nanumgothic&#39;</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontSize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T3&#39;</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontBold&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontUnderline&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;fontItalic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;lineHeight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;compId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;paragraph_3801062811469603612800&#39;</span>
+        <span class="n">byline</span><span class="p">[</span><span class="s1">&#39;focusComp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="n">byline</span></div>
+
+<div class="viewcode-block" id="NPOST.gen_related_article_block"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.gen_related_article_block">[문서]</a>    <span class="k">def</span> <span class="nf">gen_related_article_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tags</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        관련기사 block 생성</span>
+
+<span class="sd">        :param dictionary tags: facebook og tags</span>
+<span class="sd">        :return: 관련기사 Block Dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rel_object</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;og:title&#39;</span><span class="p">]</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;link&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;og:url&#39;</span><span class="p">]</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;domain&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;www.motorgraph.com&#39;</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;thumbnail&#39;</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">][</span><span class="s1">&#39;src&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;og:image&#39;</span><span class="p">]</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">][</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;og:image:width&#39;</span><span class="p">]</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;thumbnail&#39;</span><span class="p">][</span><span class="s1">&#39;height&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;og:image:height&#39;</span><span class="p">]</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;desc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;og:description&#39;</span><span class="p">]</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;isVideo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;oglink&#39;</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;layout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;og_bSize&#39;</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;isFocused&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;@ctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;componentStyle&#39;</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;componentStyle&#39;</span><span class="p">][</span><span class="s1">&#39;align&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;center&#39;</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;compId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;oglink_6562828561470302602492&#39;</span>
+        <span class="n">rel_object</span><span class="p">[</span><span class="s1">&#39;focusComp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="n">rel_object</span></div>
+
+<div class="viewcode-block" id="NPOST.gen_meta_data_block"><a class="viewcode-back" href="../../npost.nPost.html#npost.nPost.NPOST.gen_meta_data_block">[문서]</a>    <span class="k">def</span> <span class="nf">gen_meta_data_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">document_id</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        포스트 기본 metadata block 생성</span>
+
+<span class="sd">        :param string tags: 포스트에 들어가는 해쉬태그(필수 아님)</span>
+<span class="sd">        :param string document_id: 문서 업데이트 시 사용되는 문서ID</span>
+<span class="sd">        :return: metaData Block Dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># 클라우드 태그 처리 (없다면 기본 태그 추가)</span>
+        <span class="k">if</span> <span class="n">tags</span><span class="p">:</span>
+            <span class="n">cloudtags</span> <span class="o">=</span> <span class="n">tags</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+            <span class="n">cloudtags</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">cloudtags</span><span class="p">)</span>
+            <span class="n">cloudtags</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cloudtags</span><span class="p">)</span>
+            <span class="c1">#  &#39; &#39; item 제거 (empty item 과 다름)</span>
+            <span class="k">if</span> <span class="s1">&#39; &#39;</span> <span class="ow">in</span> <span class="n">cloudtags</span><span class="p">:</span>
+                <span class="n">cloudtags</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+            <span class="c1">#  item 에 포함된 space 제거</span>
+            <span class="n">cloudtags</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">cloudtags</span><span class="p">]</span>
+            <span class="n">cloudtags</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">cloudtags</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cloudtags</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;모터그래프&#39;</span><span class="p">]</span>
+
+        <span class="n">meta_obj</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;doctype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;normal&#39;</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;templateType&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;UGC_SIMPLE&#39;</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;volumeNo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;seriesNo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>  <span class="c1"># 시리즈에 추가 하려면 시리즈 코드를 획득하여 이곳에 넣는다</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;openType&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>   <span class="c1"># 전체공개 여부 (0: 노출, 10: 비노출)</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;searchNotAllowed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># 검색결과 노출여부 (0: 노출, 1: 비노출)</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;volumeAuthorComment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;reserveDate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>  <span class="c1"># 예약 발행 시 이곳에 날짜를 넣는다</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;blogpublish&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># 연동된 블로그에 동시 발행 시 TRUE (테스트 해보지 않음)</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;facebookPublish&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># 연동된 페이스북에 동시 발행 (테스트 해보지 않음)</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;blogCategoryNo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># 아마도 연동된 블로그의 카테고리</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;cloudTags&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cloudtags</span>  <span class="c1"># 포스트에 들어가는 해쉬태그</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;categoryNo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">57</span>  <span class="c1"># 포스트 카테고리 코드 (57은 자동차)</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;masterYn&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;docTemplateType&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;@service&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;post&#39;</span>
+        <span class="c1"># 임시문서 아이디 (랜덤으로 하게 되면 다른 사용자의 문서가 훼손될 수도 있어서 문제가 될수도 있음</span>
+        <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;publishMeta&#39;</span><span class="p">][</span><span class="s1">&#39;tempDocumentId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;27505684&#39;</span>
+
+        <span class="c1"># 신규 등록이 아닌 업데이트라면 documentId를 추가해줘야 함</span>
+        <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">document_id</span><span class="p">):</span>
+            <span class="n">meta_obj</span><span class="p">[</span><span class="s1">&#39;documentId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">document_id</span>
+
+        <span class="k">return</span> <span class="n">meta_obj</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">모듈 코드</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>빠른 검색</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="바로 가기" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, elk.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
