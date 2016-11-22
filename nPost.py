@@ -597,13 +597,13 @@ class NPOST:
         """
 
         value = '<span style="color: rgb(0, 0, 0);' \
-                '">' + name + ' 기자</span><span class="Apple-converted-space" ' \
+                '">' + name + '</span><span class="Apple-converted-space" ' \
                 'style="color: rgb(0, 0, 0);">&nbsp;</span>' \
                 '<a href="mailto:' + email + '" style="color: rgb(96, 140, 186) ' \
                 '!important">' + email + '</a><span class="Apple-converted-space" ' \
                 'style="color: rgb(0, 0, 0);"></span><span style="color: rgb(0, 0, 0);">' \
-                '&lt;자동차 전문 매체 모터그래프(</span><a href="http://motorgraph.com/" target="_blank" ' \
-                'style="color: rgb(96, 140, 186) !important">http://motorgraph.com</a><span style="color:' \
+                '&lt;Your Company(</span><a href="http://YourComapany.com/" target="_blank" ' \
+                'style="color: rgb(96, 140, 186) !important">http://YourCompany.com</a><span style="color:' \
                 ' rgb(0, 0, 0);">) &gt;</span></br>'
 
         byline = OrderedDict()
