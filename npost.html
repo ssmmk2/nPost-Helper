@@ -451,6 +451,175 @@
 
 <div class="section" id="json">
 <h2>JSON 구성 방법<a class="headerlink" href="#json" title="제목 주소">¶</a></h2>
+<p>P.S1 : 반드시 아래처럼 구성할 필요는 없습니다. (순서만 지켜지면 됩니다)</p>
+<p>P.S2 : 각 메소드의 사용법 소개를 겸한다고 생각하면 됩니다</p>
+<p><code class="docutils literal"><span class="pre">pre_obj</span></code> : 포스트 미리보기 송출용 Dictionary</p>
+<p><code class="docutils literal"><span class="pre">post_obj</span></code> : 포스트 송출용 Dictionary</p>
+<p><code class="docutils literal"><span class="pre">content_obj</span></code> : 포스트 본문 영역 Dictionary</p>
+<p><code class="docutils literal"><span class="pre">header_obj</span></code> : 포스트 타이틀 헤더 영역 Dictionary</p>
+<div class="section" id="id1">
+<h3>구성순서<a class="headerlink" href="#id1" title="제목 주소">¶</a></h3>
+<ol class="arabic">
+<li><dl class="first docutils">
+<dt>API class init</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">npost</span> <span class="o">=</span> <span class="n">nPost</span><span class="o">.</span><span class="n">postAPI</span><span class="o">.</span><span class="n">NPOST</span><span class="p">(</span><span class="n">login_id</span><span class="p">,</span> <span class="n">login_pw</span><span class="p">,</span> <span class="n">uid</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">npost.gen_info_block(title)</span></code> 데이터를 가져와 <code class="docutils literal"><span class="pre">post_obj</span></code> 에 update</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">info_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">gen_info_block</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+<span class="n">post_obj</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">info_obj</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">npost.gen_title_header_block(title)</span></code> 데이터를 가져와 <code class="docutils literal"><span class="pre">header_obj</span></code> 에 append</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">header_info_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">gen_title_header_block</span><span class="p">(</span><span class="n">titile</span><span class="p">)</span>
+<span class="n">header_obj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">header_info_obj</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>3번의 <code class="docutils literal"><span class="pre">header_obj``를</span> <span class="pre">``content_obj</span></code> 에 append</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">content_obj</span> <span class="o">=</span> <span class="p">[</span><span class="n">header_obj</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><p class="first">본문영역의 데이터를 순서대로 <code class="docutils literal"><span class="pre">content_obj</span></code> 에 append</p>
+<blockquote>
+<div><ul>
+<li><dl class="first docutils">
+<dt>본문 TEXT :</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">text_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">gen_paragraph_block</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="n">content_obj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">text_obj</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>중간제목 :</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">sub_tilte_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">gen_section_title_block</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="n">content_obj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sub_title_obj</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Image :</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">uploaded_info</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">send_image_file</span><span class="p">(</span><span class="n">image_url</span> <span class="ow">or</span> <span class="nb">file</span><span class="p">)</span>
+<span class="c1"># represent 는 대표이미지 여부를 설정 (True / False)</span>
+<span class="n">image_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">gen_image_block</span><span class="p">(</span><span class="n">uploaded_info</span><span class="p">,</span> <span class="n">represent</span><span class="p">)</span>
+<span class="n">content_obj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">image_obj</span><span class="p">)</span>
+<span class="c1"># 대표이미지 였다면 header_obj의 background 정보로 넣어준다</span>
+<span class="k">if</span> <span class="n">represent</span> <span class="ow">is</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="n">header_obj</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">][</span><span class="s1">&#39;image&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image_obj</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Video :</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="c1"># 네이버 TV캐스트 동영상일 경우:</span>
+<span class="n">video_info</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">get_tvcast_link_info</span><span class="p">(</span><span class="n">tvcast_video_url</span><span class="p">)</span>
+<span class="n">video_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">gen_video_block</span><span class="p">(</span><span class="n">video_info</span><span class="p">,</span> <span class="s1">&#39;tvCast&#39;</span><span class="p">)</span>
+<span class="c1"># Youtube 동영상일 경우:</span>
+<span class="c1"># 아래와 같은 형태로 정보를 넣은 Dictionary 생성</span>
+<span class="n">video_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="s1">&#39;youtube_video_url&#39;</span><span class="p">,</span> <span class="n">html</span><span class="o">=</span><span class="s1">&#39;&lt;iframe video iframe code&gt;&lt;/iframe&gt;&#39;</span><span class="p">)</span>
+<span class="n">video_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">gen_video_block</span><span class="p">(</span><span class="n">video_info</span><span class="p">,</span> <span class="s1">&#39;youtube&#39;</span><span class="p">)</span>
+
+<span class="n">content_obj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">video_obj</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>바이라인 :</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">byline_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">gen_byLine_block</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">writer_email</span><span class="p">)</span>
+<span class="n">content_obj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">byline_obj</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>관련링크 :</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Facebook OpenGraph tag가 포함되어 있는 링크를 추가</span>
+<span class="c1"># 카드형태의 템플릿으로 관련링크가 생성된다</span>
+<span class="n">tags</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">get_related_article_meta_tag</span><span class="p">(</span><span class="n">related_url</span><span class="p">)</span>
+<span class="n">related_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">related_article_block</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+
+<span class="n">content_obj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">related_obj</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><dl class="first docutils">
+<dt>기본 메타데이터 블럭을 <code class="docutils literal"><span class="pre">post_obj</span></code> 에 update</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="c1"># hash_tags : , 로 구분하여 넣어준다 ex) 태그1,태그2,태그3 (공백은 허용되지 않음)</span>
+<span class="c1"># document_id : 신규등록이 아닌 기존 포스트의 수정일 경우 넣어준다.</span>
+<span class="n">meta_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">gen_meta_data_block</span><span class="p">(</span><span class="n">hash_tags</span><span class="p">,</span> <span class="n">document_id</span><span class="p">)</span>
+<span class="n">post_obj</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">meta_obj</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">post_obj</span></code> 에 데이터 취합</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">post_obj</span><span class="p">[</span><span class="s1">&#39;document&#39;</span><span class="p">][</span><span class="s1">&#39;components&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">content_obj</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">pre_obj</span></code> 생성</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="c1"># text는 임의의 내용도 관계 없고 첫번째 Paragraph 생성시 만들어도 무방</span>
+<span class="n">pre_obj</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">gen_preview_obj</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">pre_obj</span></code> 와 <code class="docutils literal"><span class="pre">post_obj</span></code> 를 json으로 encode</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">pre_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pre_obj</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">post_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">post_obj</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>포스트 송출</dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="c1"># mode : 신규등록과 수정등록 구분자 (writePost / updatePost)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">npost</span><span class="o">.</span><span class="n">send_post</span><span class="p">(</span><span class="n">pre_json</span><span class="p">,</span> <span class="n">post_json</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><p class="first">전송 후 반환된 결과 json 내에 전송 성공여부와 document_id 등이 들어 있다.</p>
+</li>
+</ol>
+</div>
 </div>
 </div>
 
@@ -463,7 +632,10 @@
   <h3><a href="index.html">목차</a></h3>
   <ul>
 <li><a class="reference internal" href="#">NPOST CLASS</a><ul>
-<li><a class="reference internal" href="#json">JSON 구성 방법</a></li>
+<li><a class="reference internal" href="#json">JSON 구성 방법</a><ul>
+<li><a class="reference internal" href="#id1">구성순서</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

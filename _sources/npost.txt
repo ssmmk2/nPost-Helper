@@ -9,4 +9,128 @@ NPOST CLASS
 JSON 구성 방법
 --------------
 
+P.S1 : 반드시 아래처럼 구성할 필요는 없습니다. (순서만 지켜지면 됩니다)
+
+P.S2 : 각 메소드의 사용법 소개를 겸한다고 생각하면 됩니다
+
+``pre_obj`` : 포스트 미리보기 송출용 Dictionary
+
+``post_obj`` : 포스트 송출용 Dictionary
+
+``content_obj`` : 포스트 본문 영역 Dictionary
+
+``header_obj`` : 포스트 타이틀 헤더 영역 Dictionary
+
+
+구성순서
+~~~~~~~~
+
+#. API class init
+    .. code-block:: python
+
+        npost = nPost.postAPI.NPOST(login_id, login_pw, uid)
+
+#. ``npost.gen_info_block(title)`` 데이터를 가져와 ``post_obj`` 에 update
+    .. code-block:: python
+
+        info_obj = npost.gen_info_block(title)
+        post_obj.update(info_obj)
+
+#. ``npost.gen_title_header_block(title)`` 데이터를 가져와 ``header_obj`` 에 append
+    .. code-block:: python
+
+        header_info_obj = npost.gen_title_header_block(titile)
+        header_obj.append(header_info_obj)
+
+#. 3번의 ``header_obj``를 ``content_obj`` 에 append
+    .. code-block:: python
+
+        content_obj = [header_obj]
+
+#. 본문영역의 데이터를 순서대로 ``content_obj`` 에 append
+
+    - 본문 TEXT :
+        .. code-block:: python
+
+            text_obj = npost.gen_paragraph_block(text)
+            content_obj.append(text_obj)
+
+    - 중간제목 :
+        .. code-block:: python
+
+            sub_tilte_obj = npost.gen_section_title_block(text)
+            content_obj.append(sub_title_obj)
+
+    - Image :
+        .. code-block:: python
+
+            uploaded_info = npost.send_image_file(image_url or file)
+            # represent 는 대표이미지 여부를 설정 (True / False)
+            image_obj = npost.gen_image_block(uploaded_info, represent)
+            content_obj.append(image_obj)
+            # 대표이미지 였다면 header_obj의 background 정보로 넣어준다
+            if represent is True:
+                header_obj['background']['image'] = image_obj
+
+    - Video :
+        .. code-block:: python
+
+            # 네이버 TV캐스트 동영상일 경우:
+            video_info = npost.get_tvcast_link_info(tvcast_video_url)
+            video_obj = npost.gen_video_block(video_info, 'tvCast')
+            # Youtube 동영상일 경우:
+            # 아래와 같은 형태로 정보를 넣은 Dictionary 생성
+            video_info = dict(src='youtube_video_url', html='<iframe video iframe code></iframe>')
+            video_obj = npost.gen_video_block(video_info, 'youtube')
+
+            content_obj.append(video_obj)
+
+    - 바이라인 :
+        .. code-block:: python
+
+            byline_obj = npost.gen_byLine_block(writer, writer_email)
+            content_obj.append(byline_obj)
+
+    - 관련링크 :
+        .. code-block:: python
+
+            # Facebook OpenGraph tag가 포함되어 있는 링크를 추가
+            # 카드형태의 템플릿으로 관련링크가 생성된다
+            tags = npost.get_related_article_meta_tag(related_url)
+            related_obj = npost.related_article_block(tags)
+
+            content_obj.append(related_obj)
+
+#. 기본 메타데이터 블럭을 ``post_obj`` 에 update
+    .. code-block:: python
+
+        # hash_tags : , 로 구분하여 넣어준다 ex) 태그1,태그2,태그3 (공백은 허용되지 않음)
+        # document_id : 신규등록이 아닌 기존 포스트의 수정일 경우 넣어준다.
+        meta_obj = npost.gen_meta_data_block(hash_tags, document_id)
+        post_obj.update(meta_obj)
+
+#. ``post_obj`` 에 데이터 취합
+    .. code-block:: python
+
+        post_obj['document']['components'] = content_obj
+
+#. ``pre_obj`` 생성
+    .. code-block:: python
+
+        # text는 임의의 내용도 관계 없고 첫번째 Paragraph 생성시 만들어도 무방
+        pre_obj = npost.gen_preview_obj(text)
+
+#. ``pre_obj`` 와 ``post_obj`` 를 json으로 encode
+    .. code-block:: python
+
+        pre_json = json.dumps(pre_obj, ensure_ascii=True)
+        post_json = json.dumps(post_obj, ensure_ascii=True)
+
+#. 포스트 송출
+    .. code-block:: python
+
+        # mode : 신규등록과 수정등록 구분자 (writePost / updatePost)
+        result = npost.send_post(pre_json, post_json, mode)
+
+#. 전송 후 반환된 결과 json 내에 전송 성공여부와 document_id 등이 들어 있다.
 
